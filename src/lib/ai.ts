@@ -167,6 +167,7 @@ export async function generateQuestions(
   learningObjectives: string[]
   cost: number
   modelUsed: string
+  usage: { promptTokens: number; completionTokens: number; totalTokens: number }
 }> {
   const objectivesSection = learningObjectives && learningObjectives.length > 0
     ? `\nTujuan pembelajaran yang harus dicapai:\n${learningObjectives.map((o) => `- ${o}`).join('\n')}\n\nBuat soal yang sesuai dengan tujuan pembelajaran tersebut.`
@@ -222,6 +223,11 @@ ${SYSTEM_PROMPTS.generateQuestions}`
     learningObjectives: generatedObjectives,
     cost,
     modelUsed,
+    usage: {
+      promptTokens: response.usage?.prompt_tokens || 0,
+      completionTokens: response.usage?.completion_tokens || 0,
+      totalTokens: response.usage?.total_tokens || 0,
+    },
   }
 }
 

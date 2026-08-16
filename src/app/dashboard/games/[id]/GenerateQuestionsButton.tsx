@@ -9,8 +9,9 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
   const [error, setError] = useState('')
   const [result, setResult] = useState<{
     total: number
-    cost?: number
     modelUsed?: string
+    usage?: { promptTokens: number; completionTokens: number; totalTokens: number }
+    remaining?: number
     learningObjectives?: string[]
   } | null>(null)
 
@@ -31,8 +32,9 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
 
       setResult({
         total: data.total,
-        cost: data.cost,
         modelUsed: data.modelUsed,
+        usage: data.usage,
+        remaining: data.remaining,
         learningObjectives: data.learningObjectives,
       })
       router.refresh()
@@ -63,9 +65,20 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
 
       {result && (
         <div className="mt-4 bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 text-sm">
-          ✅ Berhasil! {result.total} soal dibuat
-          {result.modelUsed && <span> · model: {result.modelUsed}</span>}
-          {typeof result.cost === 'number' && <span> · biaya: Rp {result.cost}</span>}
+          <div className="font-semibold">✅ Berhasil! {result.total} soal dibuat</div>
+          <div className="mt-1 text-green-700/90">
+            🤖 model: {result.modelUsed}
+            {result.usage && (
+              <span>
+                {' '}· 🔢 token: {result.usage.totalTokens.toLocaleString('id-ID')} dipakai
+                (input {result.usage.promptTokens.toLocaleString('id-ID')} + output{' '}
+                {result.usage.completionTokens.toLocaleString('id-ID')})
+              </span>
+            )}
+            {typeof result.remaining === 'number' && (
+              <span> · ⚡ sisa {result.remaining} generate</span>
+            )}
+          </div>
           {result.learningObjectives && result.learningObjectives.length > 0 && (
             <div className="mt-3 pt-3 border-t border-green-200">
               <div className="font-semibold mb-1.5">🎯 Tujuan Pembelajaran:</div>

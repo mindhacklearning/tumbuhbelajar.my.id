@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     // Generate questions using AI (AI creates objectives if none provided)
-    const { questions, learningObjectives, cost, modelUsed } = await generateQuestions(
+    const { questions, learningObjectives, cost, modelUsed, usage } = await generateQuestions(
       topic || game.topic,
       parsedSubTopics,
       difficulty || game.difficulty,
@@ -138,7 +138,12 @@ export async function POST(request: Request) {
       questions: createdQuestions,
       total: questions.length,
       learningObjectives,
-      cost,
+      usage: {
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        totalTokens: usage.totalTokens,
+      },
+      remaining: Math.max(0, teacher.aiActionsLimit - (teacher.aiActionsUsed + 1)),
       modelUsed
     })
   } catch (error) {

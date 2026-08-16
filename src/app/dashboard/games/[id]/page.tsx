@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateTeacher } from '@/lib/teacher'
+import GameMap from '@/components/GameMap'
 import GenerateQuestionsButton from './GenerateQuestionsButton'
 
 export default async function GameDetailPage({
@@ -123,8 +124,16 @@ export default async function GameDetailPage({
           )}
         </div>
 
+        {/* Game Map */}
+        <GameMap
+          missionCounts={game.missions.map((m) => m.questions.length)}
+          totalQuestions={game.missions.reduce((s, m) => s + m.questions.length, 0)}
+        />
+
         {/* Generate questions */}
-        <GenerateQuestionsButton gameId={game.id} />
+        <div className="mt-8">
+          <GenerateQuestionsButton gameId={game.id} />
+        </div>
 
         {/* Missions & questions */}
         <div className="mt-8 space-y-6">
