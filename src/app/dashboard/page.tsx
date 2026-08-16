@@ -16,10 +16,10 @@ export default async function DashboardPage() {
     {
       icon: '🎮',
       title: 'Buat Game Detektif',
-      desc: 'Buat game baru, pilih topik, generate soal dengan AI',
+      desc: 'Pilih bab & sub-bab, generate soal otomatis dengan AI',
       href: '/dashboard/games',
-      status: 'Segera',
-      ready: false,
+      status: 'Aktif',
+      ready: true,
     },
     {
       icon: '👥',

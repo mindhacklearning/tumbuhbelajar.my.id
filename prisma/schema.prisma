@@ -191,18 +191,20 @@ model Diagnose {
 // ============================================
 
 model Game {
-  id          String   @id @default(cuid())
-  teacherId   String
-  title       String
-  description String?
-  subject     String   @default("Matematika")
-  topic       String
-  subTopics   String?  // JSON array
-  difficulty  String   @default("MEDIUM") // EASY, MEDIUM, HARD, MIXED
-  status      String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
-  coverImage  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  teacherId          String
+  title              String
+  description        String?
+  subject            String   @default("Matematika")
+  category           String?  // BAB/Kategori, e.g. "Bab 1: Bilangan"
+  topic              String
+  subTopics          String?  // JSON array of sub-bab
+  learningObjectives String?  // Tujuan pembelajaran (JSON array or text)
+  difficulty         String   @default("MEDIUM") // EASY, MEDIUM, HARD, MIXED
+  status             String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  coverImage         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   teacher  Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   missions Mission[]
