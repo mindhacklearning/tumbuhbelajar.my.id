@@ -13,7 +13,7 @@ Platform SaaS untuk guru Matematika SMP dengan game edukasi "Detektif Data" berb
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/tumbuhbelajar.my.id.git
+git clone https://github.com/mindhacklearning/tumbuhbelajar.my.id.git
 cd tumbuhbelajar.my.id
 
 # Install dependencies
