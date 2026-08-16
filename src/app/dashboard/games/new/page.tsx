@@ -23,6 +23,9 @@ export default function NewGamePage() {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [aiIdeas, setAiIdeas] = useState<{ title: string; description: string }[]>([])
+  const [aiIdeasLoading, setAiIdeasLoading] = useState(false)
+  const [aiIdeasError, setAiIdeasError] = useState('')
 
   const babList = MATH_CURRICULUM.filter((b) => b.kelas === Number(kelas))
   const selectedBabData = babList.find((b) => b.id === selectedBab)
@@ -31,6 +34,36 @@ export default function NewGamePage() {
     setSelectedSubBabs((prev) =>
       prev.includes(name) ? prev.filter((s) => s !== name) : [...prev, name]
     )
+  }
+
+  async function generateIdeas() {
+    if (!selectedBabData) return
+    setAiIdeasLoading(true)
+    setAiIdeasError('')
+    try {
+      const res = await fetch('/api/ai/generate-game-meta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kelas: Number(kelas),
+          category: selectedBabData.bab,
+          subTopics: selectedSubBabs,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Gagal generate ide')
+      setAiIdeas(data.options || [])
+    } catch (err) {
+      setAiIdeasError(err instanceof Error ? err.message : 'Gagal generate ide. Coba lagi.')
+    } finally {
+      setAiIdeasLoading(false)
+    }
+  }
+
+  function applyIdea(idea: { title: string; description: string }) {
+    setTitle(idea.title)
+    setDescription(idea.description)
+    setAiIdeas([])
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -102,7 +135,22 @@ export default function NewGamePage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Step 1: Info dasar */}
           <section className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">1. Info Dasar</h2>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="font-semibold text-gray-900">1. Info Dasar</h2>
+              <button
+                type="button"
+                onClick={generateIdeas}
+                disabled={aiIdeasLoading || !selectedBab}
+                className="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 text-purple-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-purple-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {aiIdeasLoading ? '⏳ AI Berpikir...' : '✨ Ide Judul AI'}
+              </button>
+            </div>
+            {!selectedBab && (
+              <p className="text-xs text-gray-400 -mt-2 mb-3">
+                Pilih bab di bagian 2 dulu, lalu AI bisa buatkan judul & deskripsi
+              </p>
+            )}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -114,7 +162,7 @@ export default function NewGamePage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Contoh: Detektif Pythagoras"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
                 />
               </div>
               <div>
@@ -124,10 +172,49 @@ export default function NewGamePage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Cerita singkat untuk misi detektif..."
                   rows={2}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
                 />
               </div>
             </div>
+
+            {/* AI idea suggestions */}
+            {aiIdeas.length > 0 && (
+              <div className="mt-5">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  💡 Pilih ide dari AI:
+                </h3>
+                <div className="space-y-3">
+                  {aiIdeas.map((idea, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => applyIdea(idea)}
+                      className="w-full text-left border border-purple-200 rounded-xl p-4 hover:border-purple-400 hover:bg-purple-50 transition group"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-medium text-gray-900 group-hover:text-purple-800">
+                            {idea.title}
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {idea.description}
+                          </div>
+                        </div>
+                        <span className="text-purple-600 text-sm font-medium shrink-0">
+                          Pakai →
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {aiIdeasError && (
+              <div className="mt-4 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
+                ⚠️ {aiIdeasError}
+              </div>
+            )}
           </section>
 
           {/* Step 2: Kategori & Bab */}
