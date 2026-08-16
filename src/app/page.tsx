@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AuthHeader from '@/components/AuthHeader'
 
 export default function HomePage() {
   return (
@@ -17,12 +18,7 @@ export default function HomePage() {
             <Link href="#harga" className="text-gray-600 hover:text-blue-600 transition">Harga</Link>
             <Link href="#carakerja" className="text-gray-600 hover:text-blue-600 transition">Cara Kerja</Link>
           </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-gray-600 hover:text-blue-600 transition">Masuk</Link>
-            <Link href="/register" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-              Daftar Gratis
-            </Link>
-          </div>
+          <AuthHeader />
         </div>
       </header>
 
