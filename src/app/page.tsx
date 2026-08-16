@@ -10,7 +10,7 @@ export default function HomePage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">BD</span>
             </div>
-            <span className="font-bold text-xl text-gray-900">Belajar.my.id</span>
+            <span className="font-bold text-xl text-gray-900">TumbuhBelajar.my.id</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="#fitur" className="text-gray-600 hover:text-blue-600 transition">Fitur</Link>
@@ -273,10 +273,10 @@ export default function HomePage() {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">BD</span>
               </div>
-              <span className="font-bold text-xl text-gray-900">Belajar.my.id</span>
+              <span className="font-bold text-xl text-gray-900">TumbuhBelajar.my.id</span>
             </div>
             <p className="text-gray-500 text-sm">
-              © 2025 Belajar.my.id — Platform Game Edukasi Matematika
+              © 2025 TumbuhBelajar.my.id — Platform Game Edukasi Matematika
             </p>
           </div>
         </div>

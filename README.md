@@ -1,4 +1,4 @@
-# Belajar.my.id - Game Edukasi Matematika SMP
+# TumbuhBelajar.my.id - Game Edukasi Matematika SMP
 
 Platform SaaS untuk guru Matematika SMP dengan game edukasi "Detektif Data" berbasis AI.
 
@@ -13,8 +13,8 @@ Platform SaaS untuk guru Matematika SMP dengan game edukasi "Detektif Data" berb
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/belajar.my.id.git
-cd belajar.my.id
+git clone https://github.com/yourusername/tumbuhbelajar.my.id.git
+cd tumbuhbelajar.my.id
 
 # Install dependencies
 npm install
@@ -44,7 +44,7 @@ npm run build
 ## 📁 Project Structure
 
 ```
-belajar.my.id/
+tumbuhbelajar.my.id/
 ├── prisma/
 │   └── schema.prisma     # Database schema
 ├── src/
@@ -143,6 +143,7 @@ Google OAuth for:
 - **Styling**: Tailwind CSS
 - **Auth**: NextAuth.js (Google OAuth)
 - **AI**: Sumopod API (MiniMax, Kimi)
+- **Domain**: tumbuhbelajar.my.id (managed via Sumopod)
 - **Deployment**: Vercel / GitHub Pages
 
 ## 📄 License
