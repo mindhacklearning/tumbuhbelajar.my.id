@@ -2,7 +2,7 @@
 // Primary model: MiniMax-M2.7-highspeed (90% discount)
 // Fallback: kimi-k2.7, kimi-k3
 
-const SUMOPOD_BASE_URL = process.env.SUMOPOD_BASE_URL || 'https://api.sumopod.my.id/v1'
+const SUMOPOD_BASE_URL = process.env.SUMOPOD_BASE_URL || 'https://ai.sumopod.com/v1'
 const SUMOPOD_API_KEY = process.env.SUMOPOD_API_KEY || ''
 
 interface AIRequest {
