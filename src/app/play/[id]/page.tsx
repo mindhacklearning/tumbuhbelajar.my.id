@@ -39,14 +39,43 @@ export default async function PlayPage({
     title: game.title,
     description: game.description,
     rules,
-    questions: questions.map((q) => ({
-      id: q.id,
-      order: q.order,
-      text: q.text,
-      options: safeParse(q.options),
-      correctAnswer: q.correctAnswer || '',
-      explanation: q.explanation || '',
-    })),
+    questions: questions.map((q) => {
+      const type = q.type || 'PG'
+      // Parse type-specific answer data
+      let correctAnswer = q.correctAnswer || ''
+      let correctAnswers: string[] = []
+      let pairs: { left: string; right: string }[] = []
+      let steps: string[] = []
+
+      if (type === 'PG_KOMPLEKS') {
+        try { correctAnswers = JSON.parse(correctAnswer) } catch { correctAnswers = [] }
+      } else if (type === 'MENJODOHKAN') {
+        try {
+          const parsed = JSON.parse(correctAnswer)
+          pairs = parsed.pairs || []
+          correctAnswer = parsed.answer || ''
+        } catch { pairs = [] }
+      } else if (type === 'URUTAN') {
+        try {
+          const parsed = JSON.parse(correctAnswer)
+          steps = parsed.steps || []
+          correctAnswer = parsed.answer || ''
+        } catch { steps = [] }
+      }
+
+      return {
+        id: q.id,
+        order: q.order,
+        type,
+        text: q.text,
+        options: safeParse(q.options),
+        correctAnswer,
+        correctAnswers,
+        pairs,
+        steps,
+        explanation: q.explanation || '',
+      }
+    }),
   }
 
   if (questions.length === 0) {

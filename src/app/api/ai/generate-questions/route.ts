@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateQuestions } from '@/lib/ai'
+import { generateQuestions, type QuestionType } from '@/lib/ai'
+
+const VALID_TYPES: QuestionType[] = ['PG', 'BENAR_SALAH', 'PG_KOMPLEKS', 'NUMERIK', 'ISIAN', 'MENJODOHKAN', 'URUTAN']
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { gameId, topic, subTopics, difficulty, count = 15 } = body
+    const { gameId, topic, subTopics, difficulty, count = 15, questionTypes } = body
 
     // Get game
     const game = await prisma.game.findUnique({
@@ -60,13 +62,23 @@ export async function POST(request: Request) {
       parsedObjectives = []
     }
 
+    // Validate question types
+    let types: QuestionType[] = []
+    if (Array.isArray(questionTypes) && questionTypes.length > 0) {
+      types = questionTypes.filter((t): t is QuestionType =>
+        VALID_TYPES.includes(t as QuestionType)
+      )
+    }
+    if (types.length === 0) types = ['PG']
+
     // Generate questions using AI (AI creates objectives if none provided)
     const { questions, learningObjectives, cost, modelUsed, usage } = await generateQuestions(
       topic || game.topic,
       parsedSubTopics,
       difficulty || game.difficulty,
       count,
-      parsedObjectives
+      parsedObjectives,
+      types
     )
 
     // Save AI-generated objectives back to game if they were empty
@@ -95,22 +107,42 @@ export async function POST(request: Request) {
 
     // Create questions in database
     const createdQuestions = await Promise.all(
-      questions.map(q =>
-        prisma.question.create({
+      questions.map(q => {
+        const type = (q.type && VALID_TYPES.includes(q.type as QuestionType))
+          ? q.type
+          : 'PG'
+
+        // Store type-specific data in correctAnswer JSON:
+        // - PG/BENAR_SALAH/NUMERIK/ISIAN: plain answer
+        // - PG_KOMPLEKS: JSON array of correct options
+        // - MENJODOHKAN: pairs + answer code
+        // - URUTAN: steps + answer order
+        let correctValue = q.correctAnswer || ''
+        if (type === 'PG_KOMPLEKS' && q.correctAnswers) {
+          correctValue = JSON.stringify(q.correctAnswers)
+        }
+        if (type === 'MENJODOHKAN') {
+          correctValue = JSON.stringify({ pairs: q.pairs, answer: q.correctAnswer })
+        }
+        if (type === 'URUTAN') {
+          correctValue = JSON.stringify({ steps: q.steps, answer: q.correctAnswer })
+        }
+
+        return prisma.question.create({
           data: {
             missionId,
             order: q.order,
             text: q.text,
-            options: JSON.stringify(q.options),
-            correctAnswer: q.correctAnswer,
+            options: q.options ? JSON.stringify(q.options) : null,
+            correctAnswer: correctValue,
             explanation: q.explanation,
             difficulty: q.difficulty,
             topic: q.topic,
-            type: 'PG',
+            type,
             points: 10
           }
         })
-      )
+      })
     )
 
     // Update AI usage

@@ -182,10 +182,17 @@ export default async function GameDetailPage({
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {mission.questions.map((q) => (
+                  {mission.questions.map((q) => {
+                    const badge = TYPE_BADGES[q.type] || TYPE_BADGES.PG
+                    return (
                     <details key={q.id} className="border border-gray-100 rounded-xl">
-                      <summary className="px-4 py-3 text-sm font-medium text-gray-800 cursor-pointer hover:bg-gray-50 rounded-xl">
-                        {q.order}. {q.text}
+                      <summary className="px-4 py-3 text-sm font-medium text-gray-800 cursor-pointer hover:bg-gray-50 rounded-xl flex items-center justify-between gap-2">
+                        <span className="truncate">
+                          {q.order}. {q.text}
+                        </span>
+                        <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold ${badge.cls}`}>
+                          {badge.label}
+                        </span>
                       </summary>
                       <div className="px-4 pb-4 text-sm">
                         <div className="grid grid-cols-2 gap-2 mt-2">
@@ -204,7 +211,8 @@ export default async function GameDetailPage({
                         <div className="mt-1 text-gray-500">💡 {q.explanation}</div>
                       </div>
                     </details>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             ))
@@ -213,6 +221,16 @@ export default async function GameDetailPage({
       </main>
     </div>
   )
+}
+
+const TYPE_BADGES: Record<string, { label: string; cls: string }> = {
+  PG: { label: 'PG', cls: 'bg-blue-50 text-blue-700' },
+  BENAR_SALAH: { label: 'B/S', cls: 'bg-purple-50 text-purple-700' },
+  PG_KOMPLEKS: { label: 'PG Kompleks', cls: 'bg-indigo-50 text-indigo-700' },
+  NUMERIK: { label: 'Angka', cls: 'bg-green-50 text-green-700' },
+  ISIAN: { label: 'Isian', cls: 'bg-amber-50 text-amber-700' },
+  MENJODOHKAN: { label: 'Menjodohkan', cls: 'bg-pink-50 text-pink-700' },
+  URUTAN: { label: 'Urutan', cls: 'bg-cyan-50 text-cyan-700' },
 }
 
 function safeParse(str: string | null | undefined): unknown {

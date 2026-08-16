@@ -78,7 +78,7 @@ export async function callAI(request: AIRequest): Promise<AIResponse> {
 // ============================================
 
 const SYSTEM_PROMPTS = {
-  generateQuestions: `Kamu adalah guru Matematika SMP berpengalaman. Buat 15 soal pilihan ganda (PG) TKA (Tes Kompetensi Akademik) untuk siswa SMP.
+  generateQuestions: `Kamu adalah guru Matematika SMP berpengalaman. Buat soal TKA (Tes Kompetensi Akademik) untuk siswa SMP.
 Jika diminta, buatkan juga 3 tujuan pembelajaran (learningObjectives) dengan kata kerja operasional yang spesifik.
 Format JSON:
 {
@@ -86,6 +86,7 @@ Format JSON:
   "questions": [
     {
       "order": 1,
+      "type": "PG",
       "text": "Soal dalam markdown",
       "options": {"A": "Pilihan A", "B": "Pilihan B", "C": "Pilihan C", "D": "Pilihan D"},
       "correctAnswer": "A",
@@ -94,8 +95,18 @@ Format JSON:
       "topic": "Sub-topik spesifik"
     }
   ]
-}`,
-  
+}
+CATATAN PENTING:
+- Field "type" WAJIB ada di setiap soal dan harus sesuai format tipe yang diminta
+- Untuk PG: gunakan "correctAnswer"
+- Untuk PG_KOMPLEKS: gunakan "correctAnswers" (array, minimal 2 benar)
+- Untuk NUMERIK: gunakan "correctAnswer" berupa angka (string)
+- Untuk ISIAN: gunakan "correctAnswer" berupa kata/frasa
+- Untuk MENJODOHKAN: gunakan "pairs" dan "correctAnswer" (kode urutan)
+- Untuk URUTAN: gunakan "steps" dan "correctAnswer" (urutan angka dipisah koma)
+- Jangan pernah menaruh penjelasan di dalam soal
+- Options selalu 4 (A-D) kecuali BENAR_SALAH (A=Benar, B=Salah)`,
+
   generateRPP: `Kamu adalah ahli penyusunan RPP (Rencana Pelaksanaan Pembelajaran) Kurikulum Merdeka.
 Buat RPP lengkap dengan komponen:
 - Tujuan pembelajaran
@@ -146,9 +157,13 @@ Format JSON yang actionable.`,
 export interface GeneratedQuestions {
   questions: {
     order: number
+    type?: string
     text: string
-    options: Record<string, string>
-    correctAnswer: string
+    options?: Record<string, string>
+    correctAnswer?: string
+    correctAnswers?: string[]
+    pairs?: { left: string; right: string }[]
+    steps?: string[]
     explanation: string
     difficulty: string
     topic: string
@@ -156,12 +171,35 @@ export interface GeneratedQuestions {
 }
 
 // Generate TKA Questions
+export type QuestionType = 'PG' | 'BENAR_SALAH' | 'PG_KOMPLEKS' | 'NUMERIK' | 'ISIAN' | 'MENJODOHKAN' | 'URUTAN'
+
+export const QUESTION_TYPES: Record<QuestionType, { label: string; desc: string }> = {
+  PG: { label: 'Pilihan Ganda', desc: 'Pilih 1 jawaban benar dari 4 opsi' },
+  BENAR_SALAH: { label: 'Benar / Salah', desc: 'Tentukan pernyataan benar atau salah' },
+  PG_KOMPLEKS: { label: 'PG Kompleks', desc: 'Pilih semua jawaban yang benar (bisa >1)' },
+  NUMERIK: { label: 'Jawaban Angka', desc: 'Ketik angka jawaban langsung' },
+  ISIAN: { label: 'Isian Singkat', desc: 'Ketik kata/frasa pendek' },
+  MENJODOHKAN: { label: 'Menjodohkan', desc: 'Pasangkan kiri-kanan' },
+  URUTAN: { label: 'Mengurutkan', desc: 'Susun urutan yang benar' },
+}
+
+const TYPE_INSTRUCTIONS: Record<QuestionType, string> = {
+  PG: `{"type":"PG","text":"soal","options":{"A":"..","B":"..","C":"..","D":".."},"correctAnswer":"A","explanation":".."}`,
+  BENAR_SALAH: `{"type":"BENAR_SALAH","text":"pernyataan","options":{"A":"Benar","B":"Salah"},"correctAnswer":"A","explanation":".."}`,
+  PG_KOMPLEKS: `{"type":"PG_KOMPLEKS","text":"soal","options":{"A":"..","B":"..","C":"..","D":".."},"correctAnswers":["A","C"],"explanation":".."}`,
+  NUMERIK: `{"type":"NUMERIK","text":"soal","correctAnswer":"12","explanation":".."}`,
+  ISIAN: `{"type":"ISIAN","text":"soal dengan ....","correctAnswer":"jawaban","explanation":".."}`,
+  MENJODOHKAN: `{"type":"MENJODOHKAN","text":"instruksi","pairs":[{"left":"A","right":"1"},{"left":"B","right":"2"},{"left":"C","right":"3"},{"left":"D","right":"4"}],"correctAnswer":"A1B2C3D4","explanation":".."}`,
+  URUTAN: `{"type":"URUTAN","text":"instruksi","steps":["langkah1","langkah2","langkah3","langkah4"],"correctAnswer":"1,2,3,4","explanation":".."}`,
+}
+
 export async function generateQuestions(
   topic: string,
   subTopics: string[],
   difficulty: string = 'MEDIUM',
   count: number = 15,
-  learningObjectives?: string[]
+  learningObjectives?: string[],
+  questionTypes: QuestionType[] = ['PG']
 ): Promise<{
   questions: GeneratedQuestions['questions']
   learningObjectives: string[]
@@ -173,15 +211,29 @@ export async function generateQuestions(
     ? `\nTujuan pembelajaran yang harus dicapai:\n${learningObjectives.map((o) => `- ${o}`).join('\n')}\n\nBuat soal yang sesuai dengan tujuan pembelajaran tersebut.`
     : `\nBuatkan juga 3 tujuan pembelajaran (learning objectives) yang sesuai dengan topik ini. Tujuan harus menggunakan kata kerja operasional (misal: menganalisis, menerapkan, menghitung, menyelesaikan masalah) dan spesifik.`
 
-  const prompt = `Buat ${count} soal pilihan ganda TKA Matematika SMP tentang "${topic}".
+  const typesText = questionTypes.length > 0
+    ? `Gunakan model soal berikut (sebarkan secara merata): ${questionTypes.join(', ')}`
+    : 'Gunakan model soal Pilihan Ganda (PG).'
+
+  const typeFormats = questionTypes
+    .map((t) => `- ${QUESTION_TYPES[t].label} (${t}): ${TYPE_INSTRUCTIONS[t]}`)
+    .join('\n')
+
+  const prompt = `Buat ${count} soal TKA Matematika SMP tentang "${topic}".
 Sub-topik: ${subTopics.join(', ')}
 Tingkat kesulitan: ${difficulty}
 ${objectivesSection}
 
+Model soal:
+${typesText}
+
+Format JSON untuk setiap tipe:
+${typeFormats}
+
 Pastikan:
 - 40% soal mudah, 40% sedang, 20% sulit
-- Setiap soal memiliki 4 pilihan (A, B, C, D)
-- Hanya satu jawaban benar
+- Setiap soal memiliki field "type" sesuai modelnya
+- Hanya satu jawaban benar (kecuali PG_KOMPLEKS dengan correctAnswers array)
 - Include explanation untuk setiap jawaban
 
 ${SYSTEM_PROMPTS.generateQuestions}`

@@ -2,9 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { QUESTION_TYPES, type QuestionType } from '@/lib/ai'
+
+const TYPE_ORDER: QuestionType[] = ['PG', 'BENAR_SALAH', 'PG_KOMPLEKS', 'NUMERIK', 'ISIAN', 'MENJODOHKAN', 'URUTAN']
 
 export default function GenerateQuestionsButton({ gameId }: { gameId: string }) {
   const router = useRouter()
+  const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>(['PG'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<{
@@ -15,8 +19,22 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
     learningObjectives?: string[]
   } | null>(null)
 
+  function toggleType(t: QuestionType) {
+    setSelectedTypes((prev) => {
+      if (prev.includes(t)) {
+        // Don't allow empty selection
+        if (prev.length === 1) return prev
+        return prev.filter((x) => x !== t)
+      }
+      return [...prev, t]
+    })
+  }
+
   async function generate() {
-    if (!confirm('Generate 15 soal pilihan ganda dengan AI? Ini akan memakai kuota AI kamu.')) return
+    const typeNames = selectedTypes
+      .map((t) => QUESTION_TYPES[t].label)
+      .join(', ')
+    if (!confirm(`Generate 15 soal dengan model: ${typeNames}? Ini akan memakai kuota AI kamu.`)) return
     setLoading(true)
     setError('')
     setResult(null)
@@ -25,7 +43,7 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
       const res = await fetch('/api/ai/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId }),
+        body: JSON.stringify({ gameId, questionTypes: selectedTypes }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Gagal generate soal')
@@ -47,12 +65,45 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
         <div>
           <h3 className="font-semibold text-gray-900">🤖 Generate Soal dengan AI</h3>
           <p className="text-sm text-gray-500 mt-1">
-            15 soal pilihan ganda otomatis berdasarkan bab, sub-bab & tujuan pembelajaran
+            Pilih model soal — AI membuatkan sesuai pilihan (bisa lebih dari satu)
           </p>
+        </div>
+      </div>
+
+      {/* Question type selector */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-5">
+        {TYPE_ORDER.map((t) => {
+          const info = QUESTION_TYPES[t]
+          const active = selectedTypes.includes(t)
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => toggleType(t)}
+              className={`text-left p-3 rounded-xl border transition ${
+                active
+                  ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
+                  : 'border-gray-200 hover:border-blue-300'
+              }`}
+            >
+              <div className={`text-sm font-medium ${active ? 'text-blue-800' : 'text-gray-800'}`}>
+                {info.label}
+              </div>
+              <div className="text-xs text-gray-500 mt-0.5">{info.desc}</div>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="text-sm text-gray-600">
+          <span className="font-medium text-gray-800">{selectedTypes.length}</span> model dipilih:
+          {' '}
+          {selectedTypes.map((t) => QUESTION_TYPES[t].label).join(', ')}
         </div>
         <button
           onClick={generate}
