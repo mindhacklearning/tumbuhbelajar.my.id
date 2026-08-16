@@ -52,13 +52,30 @@ export async function POST(request: Request) {
       }
     }
 
-    // Generate questions using AI
-    const { questions, cost, modelUsed } = await generateQuestions(
+    // Safely parse existing learning objectives from game
+    let parsedObjectives: string[] = []
+    try {
+      parsedObjectives = JSON.parse(game.learningObjectives || '[]')
+    } catch {
+      parsedObjectives = []
+    }
+
+    // Generate questions using AI (AI creates objectives if none provided)
+    const { questions, learningObjectives, cost, modelUsed } = await generateQuestions(
       topic || game.topic,
       parsedSubTopics,
       difficulty || game.difficulty,
-      count
+      count,
+      parsedObjectives
     )
+
+    // Save AI-generated objectives back to game if they were empty
+    if (learningObjectives.length > 0 && parsedObjectives.length === 0) {
+      await prisma.game.update({
+        where: { id: gameId },
+        data: { learningObjectives: JSON.stringify(learningObjectives) },
+      })
+    }
 
     // Create mission if not exists, or use first mission
     let missionId = game.missions[0]?.id
@@ -120,6 +137,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       questions: createdQuestions,
       total: questions.length,
+      learningObjectives,
       cost,
       modelUsed
     })

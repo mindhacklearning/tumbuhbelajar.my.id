@@ -79,8 +79,10 @@ export async function callAI(request: AIRequest): Promise<AIResponse> {
 
 const SYSTEM_PROMPTS = {
   generateQuestions: `Kamu adalah guru Matematika SMP berpengalaman. Buat 15 soal pilihan ganda (PG) TKA (Tes Kompetensi Akademik) untuk siswa SMP.
+Jika diminta, buatkan juga 3 tujuan pembelajaran (learningObjectives) dengan kata kerja operasional yang spesifik.
 Format JSON:
 {
+  "learningObjectives": ["Tujuan 1", "Tujuan 2", "Tujuan 3"],
   "questions": [
     {
       "order": 1,
@@ -158,11 +160,22 @@ export async function generateQuestions(
   topic: string,
   subTopics: string[],
   difficulty: string = 'MEDIUM',
-  count: number = 15
-): Promise<{ questions: GeneratedQuestions['questions']; cost: number; modelUsed: string }> {
+  count: number = 15,
+  learningObjectives?: string[]
+): Promise<{
+  questions: GeneratedQuestions['questions']
+  learningObjectives: string[]
+  cost: number
+  modelUsed: string
+}> {
+  const objectivesSection = learningObjectives && learningObjectives.length > 0
+    ? `\nTujuan pembelajaran yang harus dicapai:\n${learningObjectives.map((o) => `- ${o}`).join('\n')}\n\nBuat soal yang sesuai dengan tujuan pembelajaran tersebut.`
+    : `\nBuatkan juga 3 tujuan pembelajaran (learning objectives) yang sesuai dengan topik ini. Tujuan harus menggunakan kata kerja operasional (misal: menganalisis, menerapkan, menghitung, menyelesaikan masalah) dan spesifik.`
+
   const prompt = `Buat ${count} soal pilihan ganda TKA Matematika SMP tentang "${topic}".
 Sub-topik: ${subTopics.join(', ')}
 Tingkat kesulitan: ${difficulty}
+${objectivesSection}
 
 Pastikan:
 - 40% soal mudah, 40% sedang, 20% sulit
@@ -194,8 +207,22 @@ ${SYSTEM_PROMPTS.generateQuestions}`
   const jsonMatch = content.match(/\{[\s\S]*\}/)
   if (!jsonMatch) throw new Error('Failed to parse AI response')
 
-  const parsed = JSON.parse(jsonMatch[0]) as GeneratedQuestions
-  return { questions: parsed.questions, cost, modelUsed }
+  const parsed = JSON.parse(jsonMatch[0]) as GeneratedQuestions & {
+    learningObjectives?: string[]
+  }
+  const generatedObjectives =
+    parsed.learningObjectives && parsed.learningObjectives.length > 0
+      ? parsed.learningObjectives
+      : learningObjectives && learningObjectives.length > 0
+        ? learningObjectives
+        : []
+
+  return {
+    questions: parsed.questions,
+    learningObjectives: generatedObjectives,
+    cost,
+    modelUsed,
+  }
 }
 
 // Generate RPP

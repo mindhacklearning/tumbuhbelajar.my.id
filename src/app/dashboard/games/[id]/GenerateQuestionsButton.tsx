@@ -11,6 +11,7 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
     total: number
     cost?: number
     modelUsed?: string
+    learningObjectives?: string[]
   } | null>(null)
 
   async function generate() {
@@ -28,7 +29,12 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Gagal generate soal')
 
-      setResult({ total: data.total, cost: data.cost, modelUsed: data.modelUsed })
+      setResult({
+        total: data.total,
+        cost: data.cost,
+        modelUsed: data.modelUsed,
+        learningObjectives: data.learningObjectives,
+      })
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan')
@@ -60,6 +66,19 @@ export default function GenerateQuestionsButton({ gameId }: { gameId: string }) 
           ✅ Berhasil! {result.total} soal dibuat
           {result.modelUsed && <span> · model: {result.modelUsed}</span>}
           {typeof result.cost === 'number' && <span> · biaya: Rp {result.cost}</span>}
+          {result.learningObjectives && result.learningObjectives.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-green-200">
+              <div className="font-semibold mb-1.5">🎯 Tujuan Pembelajaran:</div>
+              <ul className="space-y-1">
+                {result.learningObjectives.map((o, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="shrink-0">✓</span>
+                    {o}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
