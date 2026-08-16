@@ -2,15 +2,14 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { getOrCreateTeacher } from '@/lib/teacher'
 
 export default async function GamesPage() {
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  // Find teacher record for this user
-  const teacher = await prisma.teacher.findUnique({
-    where: { userId: session.user.id },
-  })
+  // Auto-provision teacher record from Google login
+  const teacher = await getOrCreateTeacher(session.user.id)
 
   if (!teacher) {
     return (

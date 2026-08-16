@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { getOrCreateTeacher } from '@/lib/teacher'
 import GenerateQuestionsButton from './GenerateQuestionsButton'
 
 export default async function GameDetailPage({
@@ -13,9 +14,7 @@ export default async function GameDetailPage({
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const teacher = await prisma.teacher.findUnique({
-    where: { userId: session.user.id },
-  })
+  const teacher = await getOrCreateTeacher(session.user.id)
   if (!teacher) redirect('/dashboard/games')
 
   const game = await prisma.game.findUnique({
