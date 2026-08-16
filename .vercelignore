@@ -1,0 +1,9 @@
+# Dependencies - don't need to upload, Vercel runs npm install
+node_modules/
+prisma/migrations/
+*.log
+.env.local
+.env.*.local
+.vercelignore
+*.md
+.git/
