@@ -42,7 +42,7 @@ Format JSON:
 Hanya output JSON, tanpa teks lain.`
 
     const response = await callAI({
-      model: AI_MODELS.MINI_MAX,
+      model: AI_MODELS.GPT_4O_MINI,
       messages: [
         { role: 'system', content: 'Kamu adalah asisten guru matematika SMP yang kreatif. Selalu merespons dalam Bahasa Indonesia. Output hanya JSON valid.' },
         { role: 'user', content: prompt },
@@ -52,7 +52,7 @@ Hanya output JSON, tanpa teks lain.`
     })
 
     const content = response.choices[0].message.content
-    const modelUsed = response.model || AI_MODELS.MINI_MAX
+    const modelUsed = response.model || AI_MODELS.GPT_4O_MINI
     const cost = estimateCost(
       modelUsed,
       response.usage?.prompt_tokens || 0,

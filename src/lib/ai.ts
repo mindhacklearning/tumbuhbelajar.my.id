@@ -1,6 +1,6 @@
 // AI Service using Sumopod API
-// Primary model: MiniMax-M2.7-highspeed (90% discount)
-// Fallback: kimi-k2.7, kimi-k3
+// Primary model: gpt-4o-mini (cheap & reliable)
+// Fallback: gemini-3.5-flash-lite (very cheap), MiniMax-M2.7-highspeed
 
 const SUMOPOD_BASE_URL = process.env.SUMOPOD_BASE_URL || 'https://ai.sumopod.com/v1'
 const SUMOPOD_API_KEY = process.env.SUMOPOD_API_KEY || ''
@@ -27,16 +27,19 @@ interface AIResponse {
 }
 
 export const AI_MODELS = {
+  GPT_4O_MINI: 'gpt-4o-mini',
+  GEMINI_FLASH_LITE: 'gemini/gemini-3.5-flash-lite',
   MINI_MAX: 'MiniMax-M2.7-highspeed',
   KIMI_K2_7: 'kimi-k2.7',
   KIMI_K3: 'kimi-k3',
-  GEMINI_FREE: 'gemini-free', // Use Gemini Free for simple tasks
 } as const
 
 export type AIModel = typeof AI_MODELS[keyof typeof AI_MODELS]
 
 // Cost estimation in USD per 1M tokens
 export const MODEL_COSTS: Record<string, { input: number; output: number }> = {
+  [AI_MODELS.GPT_4O_MINI]: { input: 0.15, output: 0.6 }, // cheap, reliable
+  [AI_MODELS.GEMINI_FLASH_LITE]: { input: 0.075, output: 0.3 }, // very cheap
   [AI_MODELS.MINI_MAX]: { input: 0.03, output: 0.12 }, // 90% discount!
   [AI_MODELS.KIMI_K2_7]: { input: 0.95, output: 4.0 },
   [AI_MODELS.KIMI_K3]: { input: 3.0, output: 15.0 },
@@ -170,7 +173,7 @@ Pastikan:
 ${SYSTEM_PROMPTS.generateQuestions}`
 
   const response = await callAI({
-    model: AI_MODELS.MINI_MAX,
+    model: AI_MODELS.GPT_4O_MINI,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.generateQuestions },
       { role: 'user', content: prompt },
@@ -180,7 +183,7 @@ ${SYSTEM_PROMPTS.generateQuestions}`
   })
 
   const content = response.choices[0].message.content
-  const modelUsed = response.model || AI_MODELS.MINI_MAX
+  const modelUsed = response.model || AI_MODELS.GPT_4O_MINI
   const cost = estimateCost(
     modelUsed,
     response.usage?.prompt_tokens || 0,
@@ -211,7 +214,7 @@ export async function generateRPP(params: {
 ${SYSTEM_PROMPTS.generateRPP}`
 
   const response = await callAI({
-    model: AI_MODELS.MINI_MAX,
+    model: AI_MODELS.GPT_4O_MINI,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.generateRPP },
       { role: 'user', content: prompt },
@@ -222,7 +225,7 @@ ${SYSTEM_PROMPTS.generateRPP}`
 
   const content = response.choices[0].message.content
   const cost = estimateCost(
-    AI_MODELS.MINI_MAX,
+    AI_MODELS.GPT_4O_MINI,
     response.usage?.prompt_tokens || 0,
     response.usage?.completion_tokens || 0
   )
@@ -244,7 +247,7 @@ export async function generateLKPD(params: {
 ${SYSTEM_PROMPTS.generateLKPD}`
 
   const response = await callAI({
-    model: AI_MODELS.MINI_MAX,
+    model: AI_MODELS.GPT_4O_MINI,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.generateLKPD },
       { role: 'user', content: prompt },
@@ -255,7 +258,7 @@ ${SYSTEM_PROMPTS.generateLKPD}`
 
   const content = response.choices[0].message.content
   const cost = estimateCost(
-    AI_MODELS.MINI_MAX,
+    AI_MODELS.GPT_4O_MINI,
     response.usage?.prompt_tokens || 0,
     response.usage?.completion_tokens || 0
   )
@@ -291,7 +294,7 @@ Format respons JSON:
 }`
 
   const response = await callAI({
-    model: AI_MODELS.MINI_MAX,
+    model: AI_MODELS.GPT_4O_MINI,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.analyzeClass },
       { role: 'user', content: prompt },
@@ -302,7 +305,7 @@ Format respons JSON:
 
   const content = response.choices[0].message.content
   const cost = estimateCost(
-    AI_MODELS.MINI_MAX,
+    AI_MODELS.GPT_4O_MINI,
     response.usage?.prompt_tokens || 0,
     response.usage?.completion_tokens || 0
   )
@@ -391,7 +394,7 @@ Format JSON:
 }`
 
   const response = await callAI({
-    model: AI_MODELS.MINI_MAX,
+    model: AI_MODELS.GPT_4O_MINI,
     messages: [
       { role: 'system', content: 'Kamu adalah guru yang memberikan grading yang adil dan konstruktif.' },
       { role: 'user', content: prompt },
@@ -402,7 +405,7 @@ Format JSON:
 
   const content = response.choices[0].message.content
   const cost = estimateCost(
-    AI_MODELS.MINI_MAX,
+    AI_MODELS.GPT_4O_MINI,
     response.usage?.prompt_tokens || 0,
     response.usage?.completion_tokens || 0
   )
