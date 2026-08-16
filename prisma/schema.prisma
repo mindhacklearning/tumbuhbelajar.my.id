@@ -1,0 +1,403 @@
+// Learn more: https://pris.ly/d/prisma-schema
+// SQLite doesn't support enums, so we use String for all enum-like fields
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTH & USER MANAGEMENT
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  role          String    @default("USER") // USER, TEACHER, ADMIN
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  teacher     Teacher?
+  parent      Parent?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// TEACHER & SUBSCRIPTION
+// ============================================
+
+model Teacher {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  slug            String    @unique // belajar.my.id/[slug]
+  displayName     String
+  school          String?
+  whatsapp        String?
+  subscription    String    @default("FREE") // FREE, STARTER, PRO, PREMIUM
+  subscriptionEnd DateTime?
+  aiActionsUsed   Int       @default(0)
+  aiActionsLimit  Int       @default(20) // fair use limit
+  referralCode    String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classRooms   ClassRoom[]
+  games        Game[]
+  documents    Document[]
+  aiAnalyses   AIAnalysis[]
+  subscriptions Subscription[]
+  referrals    Referral[]    @relation("Referrer")
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  teacherId       String
+  plan            String   // STARTER, PRO, PREMIUM
+  amount          Int      // in Rupiah
+  paymentId       String?
+  status          String   @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  periodStart     DateTime
+  periodEnd       DateTime
+  createdAt       DateTime @default(now())
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// AFFILIATE SYSTEM
+// ============================================
+
+model Referral {
+  id           String   @id @default(cuid())
+  referrerId   String
+  referredId   String
+  referralCode String
+  commission   Int      @default(0)
+  status       String   @default("PENDING") // PENDING, AVAILABLE, WITHDRAWN
+  createdAt    DateTime @default(now())
+  paidAt       DateTime?
+
+  referrer Teacher @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// CLASSROOM & STUDENTS
+// ============================================
+
+model ClassRoom {
+  id         String   @id @default(cuid())
+  teacherId  String
+  name       String   // "8B", "8C", dll
+  grade      Int      // 7, 8, 9
+  subject    String   @default("Matematika")
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  teacher  Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  students Student[]
+}
+
+model Student {
+  id          String   @id @default(cuid())
+  classRoomId String
+  name        String
+  absenNumber Int
+  email       String?
+  googleId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  classRoom      ClassRoom        @relation(fields: [classRoomId], references: [id], onDelete: Cascade)
+  attempts       Attempt[]
+  parent         Parent?
+  diagnoses      Diagnose[]
+  nonCognitive   NonCognitiveLog[]
+  sessions       StudentSession[]
+
+  @@unique([classRoomId, absenNumber])
+}
+
+model Parent {
+  id        String  @id @default(cuid())
+  studentId String  @unique
+  email     String
+  name      String?
+  userId    String? @unique
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+}
+
+model Diagnose {
+  id          String   @id @default(cuid())
+  studentId   String
+  type        String   // PRE, POST
+  subject     String
+  topic       String
+  totalScore  Int
+  answers     String   // JSON string: {questionId: answer}
+  createdAt   DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// GAME & QUESTIONS
+// ============================================
+
+model Game {
+  id          String   @id @default(cuid())
+  teacherId   String
+  title       String
+  description String?
+  subject     String   @default("Matematika")
+  topic       String
+  subTopics   String?  // JSON array
+  difficulty  String   @default("MEDIUM") // EASY, MEDIUM, HARD, MIXED
+  status      String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  coverImage  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacher  Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  missions Mission[]
+  attempts Attempt[]
+}
+
+model Mission {
+  id           String   @id @default(cuid())
+  gameId       String
+  order        Int
+  title        String
+  description  String?
+  passingScore Int      @default(70)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  game      Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  questions Question[]
+  attempts  AttemptMission[]
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  missionId     String
+  order         Int
+  type          String   @default("PG") // PG, PG_KOMPLEKS, BENAR_SALAH, MENJODOHKAN, ESSAY
+  text          String
+  imageUrl      String?
+  options       String?  // JSON string: {A: "...", B: "...", C: "...", D: "..."}
+  correctAnswer String?
+  explanation   String?
+  points        Int      @default(10)
+  difficulty    String   @default("MEDIUM")
+  topic         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  mission Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  answers  Answer[]
+}
+
+// ============================================
+// STUDENT ATTEMPTS & ANSWERS
+// ============================================
+
+model Attempt {
+  id          String    @id @default(cuid())
+  studentId   String
+  gameId      String
+  type        String    // PRACTICE, PRE_TEST, POST_TEST
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  score       Int?
+  maxScore    Int?
+  timeSpent   Int?
+  status      String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+
+  student         Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  game            Game              @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  missionAttempts AttemptMission[]
+  answers         Answer[]
+}
+
+model AttemptMission {
+  id          String    @id @default(cuid())
+  attemptId   String
+  missionId   String
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  score       Int?
+  status      String    @default("IN_PROGRESS") // LOCKED, IN_PROGRESS, COMPLETED, FAILED
+
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+}
+
+model Answer {
+  id          String   @id @default(cuid())
+  attemptId   String
+  questionId  String
+  answer      String?
+  isCorrect   Boolean?
+  answeredAt  DateTime @default(now())
+  timeSpent   Int?
+
+  attempt  Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// AI ANALYSIS
+// ============================================
+
+model AIAnalysis {
+  id           String    @id @default(cuid())
+  teacherId    String
+  type         String    // GENERATE_QUESTIONS, GRADE_ESSAY, CLASS_ANALYSIS, etc
+  targetType   String?   // class, student, question
+  targetId     String?
+  inputData    String    // JSON string
+  outputData   String?   // JSON string
+  modelUsed    String
+  tokensUsed   Int?
+  costEstimate Int?
+  status       String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// DOCUMENTS (RPP, LKPD, Rubrik)
+// ============================================
+
+model Document {
+  id         String   @id @default(cuid())
+  teacherId  String
+  type       String   // RPP, LKPD, RUBRIK_PENILAIAN, etc
+  title      String
+  subject    String
+  topic      String
+  grade      Int
+  content    String?
+  fileUrl    String?
+  metadata   String?  // JSON string
+  status     String   @default("DRAFT") // DRAFT, GENERATING, READY, FAILED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// NON-COGNITIVE TRACKING
+// ============================================
+
+model NonCognitiveLog {
+  id          String   @id @default(cuid())
+  studentId   String
+  dimension   String   // MOTIVASI, KEBIASAAN, KEMANDIRIAN, KEPERCAYAAN_DIRI, DUKUNGAN
+  score       Int      // 1-4 Likert
+  evidence    String?
+  recordedBy  String?
+  recordedAt  DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentSession {
+  id        String   @id @default(cuid())
+  studentId String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// TEMPLATES (Marketplace)
+// ============================================
+
+model Template {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  type          String   // Document type
+  subject       String
+  topic         String
+  gradeMin      Int
+  gradeMax      Int
+  content       String?  // JSON or markdown
+  previewUrl    String?
+  downloadCount Int      @default(0)
+  isFeatured    Boolean  @default(false)
+  isPublic      Boolean  @default(true)
+  creatorId     String?  // teacher who created
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // CREATE, UPDATE, DELETE
+  entity    String
+  entityId  String
+  oldData   String?  // JSON string
+  newData   String?  // JSON string
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
