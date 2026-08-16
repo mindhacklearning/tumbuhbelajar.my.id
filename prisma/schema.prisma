@@ -201,6 +201,7 @@ model Game {
   subTopics          String?  // JSON array of sub-bab
   learningObjectives String?  // Tujuan pembelajaran (JSON array or text)
   difficulty         String   @default("MEDIUM") // EASY, MEDIUM, HARD, MIXED
+  rules              String?  // JSON: game rules config
   status             String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
   coverImage         String?
   createdAt          DateTime @default(now())

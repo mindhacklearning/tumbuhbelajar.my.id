@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateTeacher } from '@/lib/teacher'
 import GameMap from '@/components/GameMap'
+import RulesEditor from '@/components/RulesEditor'
 import GenerateQuestionsButton from './GenerateQuestionsButton'
 
 export default async function GameDetailPage({
@@ -124,11 +125,34 @@ export default async function GameDetailPage({
           )}
         </div>
 
+        {/* Preview & Live buttons */}
+        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <Link
+            href={`/play/${game.id}`}
+            className="flex-1 bg-green-600 text-white px-6 py-4 rounded-xl font-semibold text-center hover:bg-green-700 transition"
+          >
+            🎮 Preview Game (Coba sebagai Siswa)
+          </Link>
+          <Link
+            href={`/dashboard/games/${game.id}/live`}
+            className="flex-1 bg-purple-600 text-white px-6 py-4 rounded-xl font-semibold text-center hover:bg-purple-700 transition"
+          >
+            📡 Monitor Live Siswa
+          </Link>
+        </div>
+
         {/* Game Map */}
-        <GameMap
-          missionCounts={game.missions.map((m) => m.questions.length)}
-          totalQuestions={game.missions.reduce((s, m) => s + m.questions.length, 0)}
-        />
+        <div className="mt-8">
+          <GameMap
+            missionCounts={game.missions.map((m) => m.questions.length)}
+            totalQuestions={game.missions.reduce((s, m) => s + m.questions.length, 0)}
+          />
+        </div>
+
+        {/* Rules */}
+        <div className="mt-8">
+          <RulesEditor gameId={game.id} initialRules={game.rules} />
+        </div>
 
         {/* Generate questions */}
         <div className="mt-8">
