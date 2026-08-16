@@ -58,19 +58,19 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
             <div>
-              <div className="text-4xl font-bold">10+</div>
+              <div className="text-4xl font-bold">0</div>
               <div className="text-blue-200">Guru Aktif</div>
             </div>
             <div>
-              <div className="text-4xl font-bold">500+</div>
+              <div className="text-4xl font-bold">0</div>
               <div className="text-blue-200">Siswa</div>
             </div>
             <div>
-              <div className="text-4xl font-bold">1000+</div>
+              <div className="text-4xl font-bold">0</div>
               <div className="text-blue-200">Soal TKA</div>
             </div>
             <div>
-              <div className="text-4xl font-bold">85%</div>
+              <div className="text-4xl font-bold">—</div>
               <div className="text-blue-200">N-Gain Rata-rata</div>
             </div>
           </div>
@@ -221,9 +221,9 @@ export default function HomePage() {
 
             {/* Pro */}
             <div className="bg-white border border-gray-200 rounded-2xl p-8">
-              <div className="text-gray-600 font-medium mb-2">Premium</div>
-              <div className="text-4xl font-bold text-gray-900 mb-4">Rp 100.000<span className="text-lg font-normal text-gray-500">/bulan</span></div>
-              <p className="text-gray-600 mb-6">Unlimited tudo</p>
+              <div className="text-gray-600 font-medium mb-2">Pro</div>
+              <div className="text-4xl font-bold text-gray-900 mb-4">Rp 50.000<span className="text-lg font-normal text-gray-500">/bulan</span></div>
+              <p className="text-gray-600 mb-6">Untuk 4+ kelas</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2 text-gray-600">
                   <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
@@ -246,7 +246,42 @@ export default function HomePage() {
                   Priority support
                 </li>
               </ul>
-              <Link href="/register?plan=premium" className="block text-center border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition">
+              <Link href="/register?plan=pro" className="block text-center border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition">
+                Pilih Pro
+              </Link>
+            </div>
+
+            {/* Premium */}
+            <div className="bg-white border-2 border-purple-600 rounded-2xl p-8 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-sm px-3 py-1 rounded-full">
+                Best Value
+              </div>
+              <div className="text-purple-600 font-medium mb-2">Premium</div>
+              <div className="text-4xl font-bold text-gray-900 mb-4">Rp 100.000<span className="text-lg font-normal text-gray-500">/bulan</span></div>
+              <p className="text-gray-600 mb-6">Untuk sekolah & organisasi</p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  Everything in Pro
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  Unlimited AI
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  Generate RPP/LKPD
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  Deep analytics
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  Priority support
+                </li>
+              </ul>
+              <Link href="/register?plan=premium" className="block text-center border border-purple-600 text-purple-600 px-6 py-3 rounded-lg hover:bg-purple-50 transition">
                 Pilih Premium
               </Link>
             </div>
