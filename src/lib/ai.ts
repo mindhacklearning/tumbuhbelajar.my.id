@@ -120,7 +120,7 @@ Buat rubrik penilaian untuk essay/uraian dengan:
 Format markdown dengan tabel rubrik.`,
   
   analyzeClass: `Kamu adalah analisis data pendidikan. Analisis hasil belajar kelas dan berikan:
-1. Statistik deskriptif (rata-rata, SD,分布)
+1. Statistik deskriptif (rata-rata, SD, distribusi)
 2. Konsep yang dikuasai kelas
 3. Konsep yang masih perlu penguatan
 4. Rekomendasi strategi pembelajaran
@@ -156,7 +156,7 @@ export async function generateQuestions(
   subTopics: string[],
   difficulty: string = 'MEDIUM',
   count: number = 15
-): Promise<{ questions: GeneratedQuestions['questions']; cost: number }> {
+): Promise<{ questions: GeneratedQuestions['questions']; cost: number; modelUsed: string }> {
   const prompt = `Buat ${count} soal pilihan ganda TKA Matematika SMP tentang "${topic}".
 Sub-topik: ${subTopics.join(', ')}
 Tingkat kesulitan: ${difficulty}
@@ -180,8 +180,9 @@ ${SYSTEM_PROMPTS.generateQuestions}`
   })
 
   const content = response.choices[0].message.content
+  const modelUsed = response.model || AI_MODELS.MINI_MAX
   const cost = estimateCost(
-    AI_MODELS.MINI_MAX,
+    modelUsed,
     response.usage?.prompt_tokens || 0,
     response.usage?.completion_tokens || 0
   )
@@ -189,9 +190,9 @@ ${SYSTEM_PROMPTS.generateQuestions}`
   // Parse JSON from response
   const jsonMatch = content.match(/\{[\s\S]*\}/)
   if (!jsonMatch) throw new Error('Failed to parse AI response')
-  
+
   const parsed = JSON.parse(jsonMatch[0]) as GeneratedQuestions
-  return { questions: parsed.questions, cost }
+  return { questions: parsed.questions, cost, modelUsed }
 }
 
 // Generate RPP

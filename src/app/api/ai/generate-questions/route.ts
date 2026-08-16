@@ -26,22 +26,43 @@ export async function POST(request: Request) {
     // Check AI actions limit
     const teacher = game.teacher
     if (teacher.aiActionsUsed >= teacher.aiActionsLimit && teacher.subscription === 'FREE') {
-      return NextResponse.json({ 
-        error: 'AI action limit reached. Upgrade your plan to continue.' 
+      return NextResponse.json({
+        error: 'AI action limit reached. Upgrade your plan to continue.'
       }, { status: 403 })
     }
 
+    // Safely parse subTopics — handle both string and array input
+    let parsedSubTopics: string[] = []
+    if (subTopics) {
+      if (Array.isArray(subTopics)) {
+        parsedSubTopics = subTopics
+      } else if (typeof subTopics === 'string') {
+        try {
+          parsedSubTopics = JSON.parse(subTopics)
+        } catch {
+          return NextResponse.json({ error: 'Invalid subTopics format' }, { status: 400 })
+        }
+      }
+    } else {
+      // Fallback to game.subTopics
+      try {
+        parsedSubTopics = JSON.parse(game.subTopics || '[]')
+      } catch {
+        parsedSubTopics = []
+      }
+    }
+
     // Generate questions using AI
-    const { questions, cost } = await generateQuestions(
+    const { questions, cost, modelUsed } = await generateQuestions(
       topic || game.topic,
-      subTopics || JSON.parse(game.subTopics || '[]'),
+      parsedSubTopics,
       difficulty || game.difficulty,
       count
     )
 
     // Create mission if not exists, or use first mission
     let missionId = game.missions[0]?.id
-    
+
     if (!missionId) {
       const mission = await prisma.mission.create({
         data: {
@@ -57,7 +78,7 @@ export async function POST(request: Request) {
 
     // Create questions in database
     const createdQuestions = await Promise.all(
-      questions.map(q => 
+      questions.map(q =>
         prisma.question.create({
           data: {
             missionId,
@@ -81,7 +102,7 @@ export async function POST(request: Request) {
       data: { aiActionsUsed: { increment: 1 } }
     })
 
-    // Log AI analysis
+    // Log AI analysis with actual model used
     await prisma.aIAnalysis.create({
       data: {
         teacherId: teacher.id,
@@ -90,19 +111,23 @@ export async function POST(request: Request) {
         targetId: missionId,
         inputData: JSON.stringify({ topic, subTopics, difficulty, count }),
         outputData: JSON.stringify({ questionCount: questions.length }),
-        modelUsed: 'MiniMax-M2.7-highspeed',
+        modelUsed: modelUsed,
         costEstimate: cost,
         status: 'COMPLETED'
       }
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       questions: createdQuestions,
+      total: questions.length,
       cost,
-      missionId
+      modelUsed
     })
   } catch (error) {
-    console.error('Error generating questions:', error)
-    return NextResponse.json({ error: 'Failed to generate questions' }, { status: 500 })
+    console.error('Generate questions error:', error)
+    return NextResponse.json(
+      { error: 'Failed to generate questions' },
+      { status: 500 }
+    )
   }
 }
