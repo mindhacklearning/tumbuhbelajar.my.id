@@ -1,12 +1,12 @@
 // Learn more: https://pris.ly/d/prisma-schema
-// SQLite doesn't support enums, so we use String for all enum-like fields
+// PostgreSQL provider - supports enums but we keep String for flexibility
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
