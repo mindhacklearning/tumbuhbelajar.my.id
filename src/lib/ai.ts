@@ -47,10 +47,10 @@ export const MODEL_COSTS: Record<string, { input: number; output: number }> = {
 
 // Estimate cost in Rupiah (IDR)
 const USD_TO_IDR = 16500
-// Safety margin: displayed/logged cost = 20x real cost.
+// Safety margin: displayed/logged cost = 30x real cost.
 // Covers: future model upgrades (up to ~claude-sonnet class), retries,
 // rate-limit overhead, and other operational costs.
-const COST_MARKUP = 20
+const COST_MARKUP = 30
 
 export function estimateCost(model: string, inputTokens: number, outputTokens: number): number {
   const costs = MODEL_COSTS[model] || { input: 0, output: 0 }
