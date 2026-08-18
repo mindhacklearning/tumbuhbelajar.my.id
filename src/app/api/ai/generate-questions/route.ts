@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateQuestions, type QuestionType } from '@/lib/ai'
+import { checkQuota, incrementQuota } from '@/lib/quota'
 
 const VALID_TYPES: QuestionType[] = ['PG', 'BENAR_SALAH', 'PG_KOMPLEKS', 'NUMERIK', 'ISIAN', 'MENJODOHKAN', 'URUTAN']
 
@@ -25,12 +26,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 })
     }
 
-    // Check AI actions limit
-    const teacher = game.teacher
-    if (teacher.aiActionsUsed >= teacher.aiActionsLimit && teacher.subscription === 'FREE') {
-      return NextResponse.json({
-        error: 'AI action limit reached. Upgrade your plan to continue.'
-      }, { status: 403 })
+    // Check per-type quota (game generation)
+    const quota = await checkQuota(game.teacherId, 'game')
+    if (!quota.ok) {
+      return NextResponse.json({ error: quota.error }, { status: 403 })
     }
 
     // Safely parse subTopics — handle both string and array input
@@ -145,16 +144,13 @@ export async function POST(request: Request) {
       })
     )
 
-    // Update AI usage
-    await prisma.teacher.update({
-      where: { id: teacher.id },
-      data: { aiActionsUsed: { increment: 1 } }
-    })
+    // Update AI usage (per-type quota)
+    await incrementQuota(game.teacherId, 'game')
 
     // Log AI analysis with actual model used
     await prisma.aIAnalysis.create({
       data: {
-        teacherId: teacher.id,
+        teacherId: game.teacherId,
         type: 'GENERATE_QUESTIONS',
         targetType: 'mission',
         targetId: missionId,
@@ -175,7 +171,7 @@ export async function POST(request: Request) {
         completionTokens: usage.completionTokens,
         totalTokens: usage.totalTokens,
       },
-      remaining: Math.max(0, teacher.aiActionsLimit - (teacher.aiActionsUsed + 1)),
+      remaining: quota.remaining - 1,
       modelUsed
     })
   } catch (error) {

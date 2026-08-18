@@ -42,8 +42,8 @@ export type AIModel = typeof AI_MODELS[keyof typeof AI_MODELS]
 export const TASK_MODELS = {
   GENERATE_QUESTIONS: AI_MODELS.DEEPSEEK_FLASH, // math questions: very cheap & fast
   GENERATE_GAME_META: AI_MODELS.GEMINI_FLASH_LITE, // title ideas: very cheap, creative enough
-  GENERATE_RPP: AI_MODELS.CLAUDE_SONNET, // formal docs: best quality for RPP/LKPD
-  GENERATE_LKPD: AI_MODELS.CLAUDE_SONNET,
+  GENERATE_RPP: AI_MODELS.GPT_4O_MINI, // formal docs: good quality, far cheaper than claude
+  GENERATE_LKPD: AI_MODELS.GPT_4O_MINI,
   ANALYZE_CLASS: AI_MODELS.DEEPSEEK_FLASH, // analytics: structured JSON, very cheap
   INTERVENTION: AI_MODELS.DEEPSEEK_FLASH, // recommendations: cheap enough
 } as const

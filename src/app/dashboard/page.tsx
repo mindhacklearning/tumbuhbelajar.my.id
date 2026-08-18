@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import QuotaCard from '@/components/QuotaCard'
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -108,6 +109,11 @@ export default async function DashboardPage() {
             aktif satu per satu. Mulai dari <strong>Buat Game</strong> dan{' '}
             <strong>Kelola Kelas</strong>.
           </div>
+        </div>
+
+        {/* Quota card */}
+        <div className="mb-8">
+          <QuotaCard />
         </div>
 
         {/* Features grid */}

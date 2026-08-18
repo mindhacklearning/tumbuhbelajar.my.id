@@ -76,10 +76,14 @@ model Teacher {
   displayName     String
   school          String?
   whatsapp        String?
-  subscription    String    @default("FREE") // FREE, STARTER, PRO, PREMIUM
+  subscription    String    @default("FREE") // FREE, STARTER_3, PRO_6, PREMIUM_12
   subscriptionEnd DateTime?
   aiActionsUsed   Int       @default(0)
-  aiActionsLimit  Int       @default(20) // fair use limit
+  aiActionsLimit  Int       @default(3) // legacy counter (game generates)
+  gameUsed        Int       @default(0) // games generated this month
+  analysisUsed    Int       @default(0) // class analyses this month
+  rppUsed         Int       @default(0) // RPP/LKPD generated this month
+  quotaMonth      String?   // "2026-08" — month of current quota cycle
   referralCode    String    @unique
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
