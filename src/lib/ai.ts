@@ -29,6 +29,7 @@ interface AIResponse {
 export const AI_MODELS = {
   GPT_4O_MINI: 'gpt-4o-mini',
   GEMINI_FLASH_LITE: 'gemini/gemini-3.5-flash-lite',
+  CLAUDE_SONNET: 'claude-sonnet-4-6',
   MINI_MAX: 'MiniMax-M2.7-highspeed',
   KIMI_K2_7: 'kimi-k2.7',
   KIMI_K3: 'kimi-k3',
@@ -36,10 +37,23 @@ export const AI_MODELS = {
 
 export type AIModel = typeof AI_MODELS[keyof typeof AI_MODELS]
 
+// Task-based model routing: cheapest capable model per task
+export const TASK_MODELS = {
+  GENERATE_QUESTIONS: AI_MODELS.GPT_4O_MINI, // math questions: cheap & reliable
+  GENERATE_GAME_META: AI_MODELS.GEMINI_FLASH_LITE, // title ideas: very cheap, creative enough
+  GENERATE_RPP: AI_MODELS.CLAUDE_SONNET, // formal docs: best quality for RPP/LKPD
+  GENERATE_LKPD: AI_MODELS.CLAUDE_SONNET,
+  ANALYZE_CLASS: AI_MODELS.GPT_4O_MINI, // analytics: structured JSON, cheap ok
+  INTERVENTION: AI_MODELS.GPT_4O_MINI,
+} as const
+
+export type AITask = keyof typeof TASK_MODELS
+
 // Cost estimation in USD per 1M tokens
 export const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   [AI_MODELS.GPT_4O_MINI]: { input: 0.15, output: 0.6 }, // cheap, reliable
   [AI_MODELS.GEMINI_FLASH_LITE]: { input: 0.075, output: 0.3 }, // very cheap
+  [AI_MODELS.CLAUDE_SONNET]: { input: 3.0, output: 15.0 }, // premium quality
   [AI_MODELS.MINI_MAX]: { input: 0.03, output: 0.12 }, // 90% discount!
   [AI_MODELS.KIMI_K2_7]: { input: 0.95, output: 4.0 },
   [AI_MODELS.KIMI_K3]: { input: 3.0, output: 15.0 },
@@ -293,7 +307,7 @@ export async function generateRPP(params: {
   topic: string
   grade: number
   duration: number // in minutes
-}): Promise<{ content: string; cost: number }> {
+}): Promise<{ content: string; cost: number; modelUsed: string }> {
   const prompt = `Buat RPP untuk:
 - Mata pelajaran: ${params.subject}
 - Topik: ${params.topic}
@@ -303,7 +317,7 @@ export async function generateRPP(params: {
 ${SYSTEM_PROMPTS.generateRPP}`
 
   const response = await callAI({
-    model: AI_MODELS.GPT_4O_MINI,
+    model: TASK_MODELS.GENERATE_RPP,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.generateRPP },
       { role: 'user', content: prompt },
@@ -313,13 +327,14 @@ ${SYSTEM_PROMPTS.generateRPP}`
   })
 
   const content = response.choices[0].message.content
+  const modelUsed = response.model || TASK_MODELS.GENERATE_RPP
   const cost = estimateCost(
-    AI_MODELS.GPT_4O_MINI,
+    modelUsed,
     response.usage?.prompt_tokens || 0,
     response.usage?.completion_tokens || 0
   )
 
-  return { content, cost }
+  return { content, cost, modelUsed }
 }
 
 // Generate LKPD
@@ -327,7 +342,7 @@ export async function generateLKPD(params: {
   subject: string
   topic: string
   grade: number
-}): Promise<{ content: string; cost: number }> {
+}): Promise<{ content: string; cost: number; modelUsed: string }> {
   const prompt = `Buat LKPD untuk:
 - Mata pelajaran: ${params.subject}
 - Topik: ${params.topic}
@@ -336,7 +351,7 @@ export async function generateLKPD(params: {
 ${SYSTEM_PROMPTS.generateLKPD}`
 
   const response = await callAI({
-    model: AI_MODELS.GPT_4O_MINI,
+    model: TASK_MODELS.GENERATE_LKPD,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.generateLKPD },
       { role: 'user', content: prompt },
@@ -346,13 +361,14 @@ ${SYSTEM_PROMPTS.generateLKPD}`
   })
 
   const content = response.choices[0].message.content
+  const modelUsed = response.model || TASK_MODELS.GENERATE_LKPD
   const cost = estimateCost(
-    AI_MODELS.GPT_4O_MINI,
+    modelUsed,
     response.usage?.prompt_tokens || 0,
     response.usage?.completion_tokens || 0
   )
 
-  return { content, cost }
+  return { content, cost, modelUsed }
 }
 
 // Analyze class performance

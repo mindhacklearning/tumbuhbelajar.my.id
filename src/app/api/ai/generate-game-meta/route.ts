@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { callAI, AI_MODELS, estimateCost } from '@/lib/ai'
+import { callAI, TASK_MODELS, estimateCost } from '@/lib/ai'
 
 export async function POST(request: Request) {
   try {
@@ -42,7 +42,7 @@ Format JSON:
 Hanya output JSON, tanpa teks lain.`
 
     const response = await callAI({
-      model: AI_MODELS.GPT_4O_MINI,
+      model: TASK_MODELS.GENERATE_GAME_META,
       messages: [
         { role: 'system', content: 'Kamu adalah asisten guru matematika SMP yang kreatif. Selalu merespons dalam Bahasa Indonesia. Output hanya JSON valid.' },
         { role: 'user', content: prompt },
@@ -52,7 +52,7 @@ Hanya output JSON, tanpa teks lain.`
     })
 
     const content = response.choices[0].message.content
-    const modelUsed = response.model || AI_MODELS.GPT_4O_MINI
+    const modelUsed = response.model || TASK_MODELS.GENERATE_GAME_META
     const cost = estimateCost(
       modelUsed,
       response.usage?.prompt_tokens || 0,
