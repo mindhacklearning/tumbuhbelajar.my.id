@@ -30,6 +30,7 @@ export const AI_MODELS = {
   GPT_4O_MINI: 'gpt-4o-mini',
   GEMINI_FLASH_LITE: 'gemini/gemini-3.5-flash-lite',
   CLAUDE_SONNET: 'claude-sonnet-4-6',
+  DEEPSEEK_FLASH: 'deepseek-v4-flash',
   MINI_MAX: 'MiniMax-M2.7-highspeed',
   KIMI_K2_7: 'kimi-k2.7',
   KIMI_K3: 'kimi-k3',
@@ -43,8 +44,8 @@ export const TASK_MODELS = {
   GENERATE_GAME_META: AI_MODELS.GEMINI_FLASH_LITE, // title ideas: very cheap, creative enough
   GENERATE_RPP: AI_MODELS.CLAUDE_SONNET, // formal docs: best quality for RPP/LKPD
   GENERATE_LKPD: AI_MODELS.CLAUDE_SONNET,
-  ANALYZE_CLASS: AI_MODELS.GPT_4O_MINI, // analytics: structured JSON, cheap ok
-  INTERVENTION: AI_MODELS.GPT_4O_MINI,
+  ANALYZE_CLASS: AI_MODELS.DEEPSEEK_FLASH, // analytics: structured JSON, very cheap
+  INTERVENTION: AI_MODELS.DEEPSEEK_FLASH, // recommendations: cheap enough
 } as const
 
 export type AITask = keyof typeof TASK_MODELS
@@ -54,6 +55,7 @@ export const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   [AI_MODELS.GPT_4O_MINI]: { input: 0.15, output: 0.6 }, // cheap, reliable
   [AI_MODELS.GEMINI_FLASH_LITE]: { input: 0.075, output: 0.3 }, // very cheap
   [AI_MODELS.CLAUDE_SONNET]: { input: 3.0, output: 15.0 }, // premium quality
+  [AI_MODELS.DEEPSEEK_FLASH]: { input: 0.14, output: 0.28 }, // very cheap, fast
   [AI_MODELS.MINI_MAX]: { input: 0.03, output: 0.12 }, // 90% discount!
   [AI_MODELS.KIMI_K2_7]: { input: 0.95, output: 4.0 },
   [AI_MODELS.KIMI_K3]: { input: 3.0, output: 15.0 },
@@ -399,7 +401,7 @@ Format respons JSON:
 }`
 
   const response = await callAI({
-    model: AI_MODELS.GPT_4O_MINI,
+    model: TASK_MODELS.ANALYZE_CLASS,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.analyzeClass },
       { role: 'user', content: prompt },
@@ -450,7 +452,7 @@ Format JSON:
 }`
 
   const response = await callAI({
-    model: AI_MODELS.KIMI_K2_7, // Use stronger model for deep analysis
+    model: TASK_MODELS.INTERVENTION,
     messages: [
       { role: 'system', content: SYSTEM_PROMPTS.interventionRecommendation },
       { role: 'user', content: prompt },
@@ -499,7 +501,7 @@ Format JSON:
 }`
 
   const response = await callAI({
-    model: AI_MODELS.GPT_4O_MINI,
+    model: TASK_MODELS.ANALYZE_CLASS,
     messages: [
       { role: 'system', content: 'Kamu adalah guru yang memberikan grading yang adil dan konstruktif.' },
       { role: 'user', content: prompt },
