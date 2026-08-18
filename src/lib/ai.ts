@@ -40,7 +40,7 @@ export type AIModel = typeof AI_MODELS[keyof typeof AI_MODELS]
 
 // Task-based model routing: cheapest capable model per task
 export const TASK_MODELS = {
-  GENERATE_QUESTIONS: AI_MODELS.GPT_4O_MINI, // math questions: cheap & reliable
+  GENERATE_QUESTIONS: AI_MODELS.DEEPSEEK_FLASH, // math questions: very cheap & fast
   GENERATE_GAME_META: AI_MODELS.GEMINI_FLASH_LITE, // title ideas: very cheap, creative enough
   GENERATE_RPP: AI_MODELS.CLAUDE_SONNET, // formal docs: best quality for RPP/LKPD
   GENERATE_LKPD: AI_MODELS.CLAUDE_SONNET,
